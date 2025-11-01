@@ -1,18 +1,16 @@
 # Core dependencies
 feedparser>=6.0.0
-requests>=2.25.0
+requests>=2.31.0
 beautifulsoup4>=4.9.0
 lxml>=4.6.0
 
-# LLM and AI
+# LLM and AI (only Google Gemini, no local models)
 google-genai>=1.7.0
-openai>=1.0.0
-anthropic>=0.5.0
 
 # Video processing
 moviepy>=1.0.0
-opencv-python>=4.5.0
-Pillow>=8.0.0
+opencv-python-headless>=4.5.0
+Pillow>=10.0.0
 
 # YouTube API
 google-api-python-client>=2.0.0
@@ -22,24 +20,18 @@ google-auth-oauthlib>=0.4.0
 python-telegram-bot>=13.0.0
 telethon>=1.24.0
 
-# Utilities
-python-dotenv==1.0.1
-pyyaml==6.0.1
-slugify>=0.0.1
-schedule>=1.0.0
-requests>=2.31.0
-Pillow>=10.0.0
-
-# Translation (if needed)
-transformers>=4.20.0
-torch>=1.9.0
-
-# Web scraping (additional)
+# Web scraping
 selenium==4.22.0
 webdriver-manager>=3.5.0
 
-# Animation (if using GSAP equivalent)
-selenium>=4.0.0  # for browser automation
+# Utilities
+python-dotenv==1.0.1
+pyyaml==6.0.1
+python-slugify>=8.0.0
+schedule>=1.0.0
 
-# Logging and monitoring
+# Logging
 loguru>=0.6.0
+
+# YouTube video download
+yt-dlp>=2023.0.0
