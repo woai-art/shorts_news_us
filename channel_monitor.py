@@ -26,7 +26,7 @@ sys.path.append(os.path.abspath('scripts'))
 try:
     from telegram_bot import NewsTelegramBot
     # Импортируем новую архитектуру движков
-    from engines import registry, PoliticoEngine, WashingtonPostEngine, TwitterEngine, NBCNewsEngine, ABCNewsEngine, TelegramPostEngine, FinancialTimesEngine
+    from engines import registry, PoliticoEngine, WashingtonPostEngine, TwitterEngine, NBCNewsEngine, ABCNewsEngine, TelegramPostEngine, FinancialTimesEngine, TheHillEngine, NYPostEngine
     # from engines import WSJEngine  # Отключен: требует подписку + Cloudflare
 except ImportError as e:
     print(f"Critical Error: Failed to import necessary modules. Make sure you are running this from the project root and venv is active. Details: {e}")
@@ -104,6 +104,8 @@ class ChannelMonitor:
             registry.register_engine('abcnews', ABCNewsEngine)
             registry.register_engine('telegrampost', TelegramPostEngine)
             registry.register_engine('financialtimes', FinancialTimesEngine)
+            registry.register_engine('thehill', TheHillEngine)
+            registry.register_engine('nypost', NYPostEngine)
             # registry.register_engine('wsj', WSJEngine)  # Отключен: требует подписку + Cloudflare
             
             # TODO: Добавить остальные движки
@@ -410,12 +412,18 @@ class ChannelMonitor:
                         elif 'politico' in source:
                             from engines.politico.politico_media_manager import PoliticoMediaManager
                             media_manager = PoliticoMediaManager(self.config)
+                        elif 'hill' in source:
+                            from engines.thehill.thehill_media_manager import TheHillMediaManager
+                            media_manager = TheHillMediaManager(self.config)
                         elif 'washington' in source or 'washington post' in source:
                             from engines.washingtonpost.washingtonpost_media_manager import WashingtonPostMediaManager
                             media_manager = WashingtonPostMediaManager(self.config)
                         elif 'nbc' in source or 'nbc news' in source:
                             from engines.nbcnews.nbcnews_media_manager import NBCNewsMediaManager
                             media_manager = NBCNewsMediaManager(self.config)
+                        elif 'new york post' in source or 'ny post' in source or 'nypost' in source:
+                            from engines.nypost.nypost_media_manager import NYPostMediaManager
+                            media_manager = NYPostMediaManager(self.config)
                         else:
                             from scripts.media_manager import MediaManager
                             media_manager = MediaManager(self.config)
@@ -425,18 +433,6 @@ class ChannelMonitor:
                         logger.info(f"📸 Медиа обработано: has_media={media_result.get('has_media', False)}")
                     except Exception as e:
                         logger.warning(f"⚠️ Ошибка обработки медиа: {e}")
-                    
-                    # Отправляем сервисное сообщение о видео, если найдено
-                    videos = news_data.get('videos', [])
-                    if videos and self.telegram_bot:
-                        try:
-                            self.telegram_bot._notify_group_on_video(
-                                news_data.get('id', 0), 
-                                news_data.get('title', ''), 
-                                videos
-                            )
-                        except Exception as e:
-                            logger.warning(f"❌ Ошибка отправки сервисного сообщения о видео: {e}")
                     
                     # Проверяем, был ли использован fallback парсинг
                     if parsed_data.get('parsed_with') in ['fallback', 'selenium_fallback']:
@@ -532,9 +528,7 @@ class ChannelMonitor:
                 has_video = news_data.get('has_video', False)
                 
                 if has_video:
-                    # Если есть видео, отправляем запрос на указание времени старта
-                    self.send_video_start_request(news_id, news_data)
-                    logger.info(f"🎬 Новость {news_id} содержит видео, ожидаем команду /startat")
+                    logger.info(f"🎬 Новость {news_id} содержит видео, запрос на /startat отправлен ботом")
                 else:
                     # Если видео нет, запускаем обработку автоматически
                     logger.info(f"🚀 Новость {news_id} не содержит видео, запускаем обработку автоматически...")
@@ -557,67 +551,6 @@ class ChannelMonitor:
             except:
                 pass # Ignore errors in the error dumper
             self.send_status_message(f"❌ Error processing message: {e}")
-
-    def send_video_start_request(self, news_id: int, news_data: dict):
-        """Отправляет запрос на указание времени старта видео в группу с превью видео."""
-        try:
-            # Формируем сообщение с информацией о видео
-            video_url = None
-            if news_data.get('videos'):
-                video_url = news_data['videos'][0]
-                video_info = f"🎥 Видео найдено: {video_url}"
-            elif 'youtube.com' in news_data.get('content', '') or 'youtu.be' in news_data.get('content', ''):
-                video_info = "🎥 YouTube видео обнаружено в контенте"
-            else:
-                video_info = "🎥 Видео найдено в контенте"
-            
-            message = (
-                f"🎬 Новость ID {news_id} содержит видео!\n"
-                f"Заголовок: {news_data.get('title', '')[:60]}...\n"
-                f"{video_info}\n\n"
-                f"Укажите старт (в секундах) командой:\n"
-                f"`/startat {news_id} <seconds>`\n\n"
-                f"Например: `/startat {news_id} 5` — начать с 5 секунды\n"
-                f"Или `/startat {news_id} 0` — начать с начала\n\n"
-                f"После команды начнется обработка видео!"
-            )
-            
-            # Проверяем, можем ли отправить видео напрямую
-            can_send_video = False
-            if video_url:
-                # Проверяем, поддерживает ли Telegram этот URL напрямую
-                if any(domain in video_url for domain in ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com']):
-                    can_send_video = True
-                else:
-                    # Для Twitter и других источников отправляем как ссылку
-                    can_send_video = False
-            
-            if can_send_video and video_url:
-                # Отправляем видео с превью для поддерживаемых источников
-                url = f"{self.publish_base_url}/sendVideo"
-                data = {
-                    "chat_id": self.publish_channel_id,
-                    "video": video_url,
-                    "caption": message,
-                    "parse_mode": "Markdown",
-                    "disable_notification": False
-                }
-            else:
-                # Отправляем обычное сообщение с ссылкой на видео
-                url = f"{self.publish_base_url}/sendMessage"
-                data = {
-                    "chat_id": self.publish_channel_id,
-                    "text": message,
-                    "parse_mode": "Markdown",
-                    "disable_notification": False
-                }
-            
-            response = requests.post(url, json=data, timeout=10)
-            response.raise_for_status()
-            logger.info(f"✅ Запрос на время старта отправлен для новости {news_id}")
-            
-        except Exception as e:
-            logger.error(f"❌ Ошибка отправки запроса времени старта: {e}")
 
     def process_startat_command(self, message: dict):
         """Обработка команды /startat из группы."""

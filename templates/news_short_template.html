@@ -81,7 +81,7 @@
             background: rgba(0, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 255, 0.2);
             border-radius: 0;
-            padding: 80px;
+            padding: 100px 80px; /* Увеличили вертикальный padding для предотвращения обрезки текста */
             width: 100%;
             height: 100%;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
@@ -93,6 +93,17 @@
             gap: 40px;
             animation: frame-pulse 5s infinite ease-in-out;
             color: #00ffff;
+            box-sizing: border-box;
+        }
+
+        .news-card-text-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 30px;
+            padding: 30px 20px;
+            min-height: 0;
             box-sizing: border-box;
         }
 
@@ -137,9 +148,17 @@
             font-weight: 700;
             font-size: 72px;
             color: #00ffff;
-            margin-bottom: 30px;
             line-height: 1.2;
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin: 0;
+            padding: 12px 20px;
+            box-sizing: border-box;
+            min-height: 0;
+            flex: 0 0 auto;
         }
 
         .news-card-description {
@@ -147,8 +166,20 @@
             font-size: 36px;
             color: rgba(0, 255, 255, 0.9);
             line-height: 1.4;
-            margin-bottom: 40px;
             text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            text-align: center;
+            margin: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            overflow: hidden;
+            padding: 12px 30px;
+            box-sizing: border-box;
+            flex: 1 1 auto;
+            min-height: 0;
         }
 
         .news-card-media {
@@ -233,11 +264,13 @@
                     <div class="date-time">{{PUBLISH_DATE}}</div>
                 </div>
                 
-                <!-- Заголовок -->
-                <div id="newsText" class="news-card-title">{{NEWS_TITLE}}</div>
-                
-                <!-- Описание -->
-                <div id="newsBrief" class="news-card-description">{{NEWS_BRIEF}}</div>
+                <div class="news-card-text-section">
+                    <!-- Заголовок -->
+                    <div id="newsText" class="news-card-title">{{NEWS_TITLE}}</div>
+                    
+                    <!-- Описание -->
+                    <div id="newsBrief" class="news-card-description">{{NEWS_BRIEF}}</div>
+                </div>
                 
                 <!-- Медиа в нижней части карточки -->
                 <div class="news-card-media">
@@ -251,62 +284,110 @@
         </div>
     </div>
     <script>
-        function adjustFontSize() {
-            const newsText = document.getElementById('newsText');
-            const newsBrief = document.getElementById('newsBrief');
-            if (!newsText || !newsBrief) return;
-            
-            // Адаптируем размер заголовка
-            const titleLength = newsText.textContent.length;
-            let titleFontSize = 48;
-            if (titleLength > 60) titleFontSize = 36;
-            else if (titleLength > 40) titleFontSize = 42;
-            newsText.style.fontSize = titleFontSize + 'px';
-            
-            // Адаптируем размер описания
-            const briefLength = newsBrief.textContent.length;
-            let briefFontSize = 24;
-            if (briefLength > 300) briefFontSize = 18;
-            else if (briefLength > 200) briefFontSize = 20;
-            else if (briefLength > 150) briefFontSize = 22;
-            newsBrief.style.fontSize = briefFontSize + 'px';
-        }
-        function adjustMediaTitleSize() {
-            const mediaTitle = document.getElementById('mediaTitle');
-            if (!mediaTitle) return;
-            const titleLength = (mediaTitle.textContent || mediaTitle.innerText).length;
-            let fontSize = 48;
-            if (titleLength > 80) fontSize = 36;
-            else if (titleLength > 50) fontSize = 42;
-            mediaTitle.style.fontSize = fontSize + 'px';
-        }
-        function initializeMedia() {
-            const newsImage = document.getElementById('newsMedia'), newsVideo = document.getElementById('newsVideo'), videoSource = newsVideo.querySelector('source');
-            console.log('Video source src:', videoSource ? videoSource.src : 'not found');
-            const hasVideo = videoSource && videoSource.src && videoSource.src !== '' && !videoSource.src.includes('{{NEWS_VIDEO}}');
-            console.log('Has video:', hasVideo);
-            if (hasVideo) {
-                newsVideo.style.display = 'block'; newsImage.style.display = 'none'; startZoomAnimation(newsVideo); newsVideo.play().catch(e => {});
-            } else {
-                startZoomAnimation(newsImage);
+        function fitText(element, targetHeight, options = {}) {
+            if (!element || !targetHeight || targetHeight <= 0) return;
+
+            const {
+                minFont = 18,
+                maxFont = 64,
+                step = 1,
+                lineHeight = 1.2,
+                tolerance = 4,
+                maxIterations = 160,
+                growIterations = 60,
+                initialFont
+            } = options;
+
+            const computed = window.getComputedStyle(element);
+            let currentFont = initialFont || parseFloat(computed.fontSize) || maxFont;
+            currentFont = Math.min(currentFont, maxFont);
+
+            element.style.lineHeight = typeof lineHeight === 'number' ? lineHeight.toString() : lineHeight;
+            element.style.fontSize = currentFont + 'px';
+
+            let i = 0;
+            while (i < maxIterations && currentFont > minFont && element.scrollHeight > targetHeight + tolerance) {
+                currentFont -= step;
+                element.style.fontSize = currentFont + 'px';
+                i++;
+            }
+
+            i = 0;
+            while (i < growIterations && currentFont < maxFont && element.scrollHeight + tolerance < targetHeight) {
+                currentFont += step;
+                element.style.fontSize = currentFont + 'px';
+                i++;
+                if (element.scrollHeight > targetHeight) {
+                    currentFont -= step;
+                    element.style.fontSize = currentFont + 'px';
+                    break;
+                }
+            }
+
+            if (currentFont < minFont) {
+                element.style.fontSize = minFont + 'px';
             }
         }
+
+        function adjustTextLayout() {
+            const newsText = document.getElementById('newsText');
+            const newsBrief = document.getElementById('newsBrief');
+            const textSection = document.querySelector('.news-card-text-section');
+            if (!newsText || !newsBrief || !textSection) return;
+
+            const sectionStyles = window.getComputedStyle(textSection);
+            const paddingTop = parseFloat(sectionStyles.paddingTop) || 0;
+            const paddingBottom = parseFloat(sectionStyles.paddingBottom) || 0;
+            const paddingLeft = parseFloat(sectionStyles.paddingLeft) || 0;
+            const paddingRight = parseFloat(sectionStyles.paddingRight) || 0;
+            const gap = parseFloat(sectionStyles.rowGap || sectionStyles.gap || '0') || 0;
+
+            const sectionHeight = textSection.clientHeight - paddingTop - paddingBottom;
+            const sectionWidth = textSection.clientWidth - paddingLeft - paddingRight;
+
+            const titleLength = (newsText.textContent || '').trim().length;
+            const baseTitleFont = Math.min(sectionHeight * 0.25, sectionWidth * 0.085, 72);
+            const lengthAdjust = titleLength > 80 ? 0.78 : titleLength > 60 ? 0.86 : titleLength > 40 ? 0.94 : 1;
+            const initialTitleFont = Math.max(26, baseTitleFont * lengthAdjust);
+
+            fitText(newsText, sectionHeight * 0.28, {
+                minFont: 24,
+                maxFont: 70,
+                lineHeight: 1.12,
+                step: 1,
+                tolerance: 3,
+                initialFont: initialTitleFont
+            });
+
+            const titleHeight = newsText.scrollHeight;
+            const availableForBrief = Math.max(sectionHeight - titleHeight - gap, sectionHeight * 0.6);
+
+            const briefLength = (newsBrief.textContent || '').trim().length;
+            const estimatedCharsPerLine = Math.max(20, Math.floor(sectionWidth / 12));
+            const estimatedLines = Math.max(1, Math.ceil(briefLength / estimatedCharsPerLine));
+            const baseBriefFont = availableForBrief / Math.max(estimatedLines * 1.32, 1);
+            const initialBriefFont = Math.max(22, Math.min(baseBriefFont, 60));
+
+            fitText(newsBrief, availableForBrief, {
+                minFont: 20,
+                maxFont: 60,
+                lineHeight: 1.26,
+                step: 1,
+                tolerance: 6,
+                initialFont: initialBriefFont
+            });
+        }
+
         function initializeTwitterAvatar() {
-            // Инициализируем аватар в карточке
-            const cardTwitterAvatar = document.querySelector('.news-card-footer #twitterAvatar');
-            const cardSourceLogo = document.querySelector('.news-card-footer #sourceLogo');
-            
-            console.log('Card Twitter Avatar src:', cardTwitterAvatar ? cardTwitterAvatar.src : 'not found');
-            console.log('Card Source Logo src:', cardSourceLogo ? cardSourceLogo.src : 'not found');
-            
-            if (cardTwitterAvatar && cardTwitterAvatar.src && !cardTwitterAvatar.src.includes('{{TWITTER_AVATAR}}')) {
-                cardTwitterAvatar.style.display = 'block';
-                cardSourceLogo.style.display = 'none';
-                console.log('Twitter avatar displayed in card');
+            const avatar = document.getElementById('twitterAvatar');
+            const sourceLogo = document.getElementById('sourceLogo');
+
+            if (avatar && avatar.src && !avatar.src.includes('{{TWITTER_AVATAR}}')) {
+                avatar.style.display = 'block';
+                if (sourceLogo) sourceLogo.style.display = 'none';
             } else {
-                cardTwitterAvatar.style.display = 'none';
-                cardSourceLogo.style.display = 'block';
-                console.log('Using source logo instead of Twitter avatar');
+                if (avatar) avatar.style.display = 'none';
+                if (sourceLogo) sourceLogo.style.display = 'block';
             }
         }
 
@@ -314,42 +395,58 @@
             const cardImage = document.getElementById('newsCardImage');
             const cardVideo = document.getElementById('newsCardVideo');
             const placeholder = document.querySelector('.news-card-media-placeholder');
-            const videoSource = cardVideo.querySelector('source');
-            
-            console.log('Card Image src:', cardImage ? cardImage.src : 'not found');
-            console.log('Card video source src:', videoSource ? videoSource.src : 'not found');
-            
-            const hasVideo = videoSource && videoSource.src && videoSource.src !== '' && !videoSource.src.includes('{{NEWS_VIDEO}}');
-            const hasImage = cardImage && cardImage.src && cardImage.src !== '' && !cardImage.src.includes('{{NEWS_IMAGE}}');
-            
-            console.log('Card has video:', hasVideo);
-            console.log('Card has image:', hasImage);
-            
+            const videoSource = cardVideo ? cardVideo.querySelector('source') : null;
+
+            const hasVideo = videoSource && videoSource.src && !videoSource.src.includes('{{NEWS_VIDEO}}');
+            const hasImage = cardImage && cardImage.src && !cardImage.src.includes('{{NEWS_IMAGE}}') && !cardImage.src.endsWith('.html');
+
             if (hasVideo) {
                 cardVideo.style.display = 'block';
                 cardImage.style.display = 'none';
-                placeholder.style.display = 'none';
-                cardVideo.play().catch(e => {});
-                console.log('Video displayed in card');
+                if (placeholder) placeholder.style.display = 'none';
+                const playPromise = cardVideo.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(() => {});
+                }
             } else if (hasImage) {
                 cardImage.style.display = 'block';
                 cardVideo.style.display = 'none';
-                placeholder.style.display = 'none';
-                console.log('Image displayed in card');
+                if (placeholder) placeholder.style.display = 'none';
             } else {
-                placeholder.style.display = 'block';
-                cardImage.style.display = 'none';
-                cardVideo.style.display = 'none';
-                console.log('No media available, showing placeholder');
+                if (placeholder) placeholder.style.display = 'block';
+                if (cardImage) cardImage.style.display = 'none';
+                if (cardVideo) cardVideo.style.display = 'none';
             }
         }
-        function startZoomAnimation(el) { if (el) gsap.to(el, { scale: 1.15, duration: 5, ease: "power1.inOut" }); }
-        document.addEventListener('DOMContentLoaded', () => {
-            adjustFontSize();
-            adjustMediaTitleSize();
-            initializeMedia();
+
+        function startZoomAnimation(el) {
+            if (el) {
+                gsap.to(el, { scale: 1.15, duration: 5, ease: "power1.inOut" });
+            }
+        }
+
+        function runInitialLayout() {
+            adjustTextLayout();
             initializeTwitterAvatar();
             initializeCardMedia();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const execute = () => {
+                runInitialLayout();
+                requestAnimationFrame(adjustTextLayout);
+                setTimeout(adjustTextLayout, 200);
+            };
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(execute);
+            } else {
+                setTimeout(execute, 150);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(adjustTextLayout);
         });
     </script>
 </body>

@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.so
 .Python
+venv/
+env/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -16,86 +19,81 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Virtual Environment
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Project specific
-logs/
-*.log
-temp/
-outputs/
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.webm
-
-# API Keys and Secrets
+# Environment variables
 .env
-config/.env
+.env.local
+.env.*.local
+
+# Credentials and secrets
 config/client_secret*.json
-config/credentials.json
 config/token.json
-config/*secret*
-config/*credentials*
-config/*token*
+*.json.backup
+
+# Logs
+logs/*.log
+*.log
 
 # Database
-*.db
-*.sqlite
-*.sqlite3
+data/*.db
+data/*.db-journal
+data/*.sqlite
+data/*.sqlite3
 
-# Media files (too large for git)
-resources/media/
-resources/music/
-resources/logos/
-resources/default_backgrounds/
+# Output files
+outputs/*.mp4
+outputs/*.avi
+outputs/*.mov
+temp/*
+!temp/.gitkeep
 
-# Temporary files
-*.tmp
-*.temp
-*.lock
+# Media files (local)
+resources/media/news/*.mp4
+resources/media/news/*.jpg
+resources/media/news/*.png
+resources/media/news/*.webp
+
+# Music (too large for git)
+resources/music/*.mp3
+resources/music/*.wav
+resources/music/*.ogg
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# System files
+Thumbs.db
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
 
 # Selenium
 chromedriver.exe
 geckodriver.exe
-*.log
 
-# YouTube API
-client_secret.json
-credentials.json
-token.json
-
-# Telegram
-session_files/
-*.session
-
-# Lock files
-channel_monitor.lock
+# Analysis and cleanup files (keep for reference)
+!CLEANUP_ANALYSIS.md
+!UBUNTU_DEPLOYMENT.md
+!UBUNTU_MIGRATION_PLAN.md

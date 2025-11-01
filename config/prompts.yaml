@@ -2,7 +2,15 @@
 
 video_package:
   generate: |-
-    TASK: Create a complete data package for a news video short. You must analyze the source text and generate two distinct components: the content for the video itself, and the SEO metadata for YouTube.
+    TASK: Create a complete data package for a SOCIAL MEDIA NEWS SHORT (YouTube Shorts/TikTok style). 
+    
+    CRITICAL CONTEXT: This is NOT traditional news - it's a short-form video designed to GRAB ATTENTION and STOP THE SCROLL. The content must be:
+    - ENGAGING and DYNAMIC (not dry or neutral)
+    - DETAILED with shocking facts or key context
+    - Written like a compelling narrator, not a news anchor
+    - Factually accurate but emotionally resonant
+    
+    You must analyze the source text and generate two distinct components: the content for the video itself, and the SEO metadata for YouTube.
 
     OUTPUT FORMAT: Respond with ONLY a single, valid JSON object. Do not include any other text, explanations, or markdown.
 
@@ -21,22 +29,35 @@ video_package:
 
     RULES FOR "video_content":
     - "title":
-        - A short, engaging, purely informational headline. MAX 80 characters.
-        - Capture the main fact or contrast in the story.
+        - A punchy, attention-grabbing headline. MAX 80 characters.
+        - Capture the drama, conflict, or shocking element of the story.
+        - Use active voice and strong verbs. Create curiosity or surprise.
         - NO sources, labels, or meta text. Only the content itself.
+        - Think: What would make someone STOP scrolling?
 
     - "summary":
-        - A clear, neutral, factual summary in MAX 250 characters.
-        - Write as if narrating directly to the viewer.
+        - An engaging, dynamic summary that captures the drama and intrigue. MAX 420 characters.
+        - Write like a compelling news narrator - factual but captivating.
+        - Include key details, context, or shocking facts from the article.
+        - Use strong verbs and vivid language while staying accurate.
+        - Create intrigue: What happened? Why does it matter? What's the impact?
         - NEVER say "tweet," "post," "online," or "source said."
         - If "author_type = person": Attribute directly, e.g. "Governor Gavin Newsom warned..."
-        - If "author_type = media": Present only the fact, without attribution.
+        - If "author_type = media": Present the most compelling facts with context.
         - Do NOT use "former president" for Trump. Always "President Trump" or "Trump."
         - Do NOT use "senator" for Rubio, Marco Rubio. Always "U.S. Secretary of State" or "Rubio."
+        - Do NOT use "senator" for JD Vance. Always "Vice President JD Vance" or "VP Vance."
         - If no role is given, use only the name without inventing a title.
         - If the content includes a direct quote in quotation marks ("..."):
             - Reproduce the quote exactly as written, without rephrasing or summarizing.
             - You may introduce it briefly, but never alter the words inside the quotes.
+        
+        EXAMPLES OF GOOD SUMMARIES:
+        ❌ BAD (too dry): "Vice President JD Vance denied that his argument with Ukrainian President Volodymyr Zelensky was strategized in advance. Vance made the claim during an interview."
+        ✅ GOOD (engaging): "Vice President JD Vance is pushing back against claims his heated clash with Zelensky was staged. In a candid interview, he insisted the Oval Office confrontation was genuine, not political theater."
+        
+        ❌ BAD (too vague): "The Times of London reports that industry insiders say they have been approached by women in alleged honeypot schemes."
+        ✅ GOOD (specific): "China and Russia are deploying attractive women to seduce Silicon Valley executives in sophisticated 'honeypot' operations. Some targets have been married and had children with foreign agents, according to industry insiders and former US counterintelligence officials."
 
 
     RULES FOR "seo_package": (This is for YouTube's backend)
@@ -63,6 +84,9 @@ facts:
     - The current status of political figures (president, ex-president, etc.)
     - The relevance of dates and events
     - The correctness of names and terms
+    
+    IMPORTANT CONTEXT (2025):
+    - JD Vance is the current Vice President of the United States
 
     News Article: {news_text}
 
@@ -93,6 +117,7 @@ facts:
     - Inaccuracies in dates and timelines
     
     CONTEXT: The current year is 2025. Verify the relevance of all information.
+    IMPORTANT: JD Vance is the current Vice President of the United States.
     
     TEXT: {news_text}
     

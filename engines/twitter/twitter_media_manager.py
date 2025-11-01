@@ -143,7 +143,8 @@ class TwitterMediaManager(MediaManager):
             'avatar_path': None,
             'has_media': False,
             'has_video': False,
-            'has_images': False
+            'has_images': False,
+            'video_offset': None
         }
         
         try:
@@ -151,6 +152,19 @@ class TwitterMediaManager(MediaManager):
             videos = news_data.get('videos', [])
             username = news_data.get('username', '')
             avatar_url = news_data.get('avatar_url', '')
+            video_offset = news_data.get('video_start_seconds')
+
+            if video_offset not in (None, ''):
+                try:
+                    video_offset = float(video_offset)
+                    if video_offset < 0:
+                        logger.warning(f"⚠️ Игнорируем отрицательный video_offset={video_offset} для Twitter видео")
+                        video_offset = None
+                except (TypeError, ValueError):
+                    logger.warning(f"⚠️ Неверный формат video_offset={video_offset} для Twitter видео")
+                    video_offset = None
+            else:
+                video_offset = None
 
             # Обрабатываем изображения
             if images:
@@ -187,7 +201,8 @@ class TwitterMediaManager(MediaManager):
                         'primary_video': local_video_path,
                         'local_video_path': local_video_path,
                         'has_media': True,
-                        'has_videos': True
+                        'has_videos': True,
+                        'video_offset': video_offset
                     })
                     logger.info(f"✅ Используем существующий локальный видео файл: {local_video_path}")
                 
@@ -261,7 +276,8 @@ class TwitterMediaManager(MediaManager):
                         'local_video_path': processed_video_path or local_video_path,  # Используем обработанное видео или оригинал
                         'thumbnail': processed_video_path or local_video_path,
                         'has_media': True,
-                        'has_video': True
+                        'has_video': True,
+                        'video_offset': video_offset
                     })
                     logger.info(f"✅ Twitter видео скачано: {local_video_path}")
                     if processed_video_path:

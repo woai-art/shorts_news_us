@@ -1,0 +1,33 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Scripts
+*.sh text eol=lf
+*.py text eol=lf
+
+# Documents
+*.md text
+*.txt text
+*.yaml text
+*.yml text
+*.json text
+*.ini text
+
+# Windows scripts
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.ttf binary
+*.otf binary
+*.db binary
+

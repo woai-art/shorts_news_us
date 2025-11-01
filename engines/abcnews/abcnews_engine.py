@@ -288,8 +288,17 @@ class ABCNewsEngine(SourceEngine):
                 '.LiveBlogPost__Body p',
                 '[class*="LiveBlogPost"] p',
                 '[class*="LiveBlog"] p',
+                # Более широкие селекторы для разных типов статей
+                'main article p',
+                'main p',
+                '[role="main"] p',
+                'div[class*="Article"] p',
+                'div[class*="Story"] p',
+                'section[class*="body"] p',
                 'article p',
-                '.story-body p'
+                '.story-body p',
+                # Самый общий селектор (последний)
+                'body p'
             ]
             
             for selector in content_selectors:
@@ -347,11 +356,40 @@ class ABCNewsEngine(SourceEngine):
             'sign up',
             'trending',
             'sponsored',
-            'editor\'s note'
+            'editor\'s note',
+            'popular reads',
+            'sponsored content',
+            'by taboola',
+            'watch live',
+            'stream on',
+            'shop',
+            'interest successfully added',
+            'turn on desktop notifications',
+            'we\'ll notify you',
+            'related topics',
+            'abc news network',
+            'privacy policy',
+            'terms of use',
+            'contact us',
+            '© 20',  # Copyright
+            'all rights reserved'
         ]
         
         text_lower = text.lower()
-        return any(keyword in text_lower for keyword in service_keywords)
+        
+        # Проверяем ключевые слова
+        if any(keyword in text_lower for keyword in service_keywords):
+            return True
+        
+        # Слишком короткие тексты (меньше 30 символов) - вероятно меню/ссылки
+        if len(text) < 30:
+            return True
+        
+        # Тексты, состоящие только из цифр и символов
+        if text.replace(' ', '').replace(',', '').replace('.', '').replace(':', '').isdigit():
+            return True
+            
+        return False
     
     def _extract_author(self, driver) -> str:
         """Извлечение автора"""

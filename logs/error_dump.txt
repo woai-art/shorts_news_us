@@ -1,0 +1,72 @@
+--- Subprocess error for news_id 340 ---
+STDOUT:
+OK Логирование Selenium настроено для подавления предупреждений
+[TARGET] Обработка новости ID 340...
+OK Логирование Selenium настроено для подавления предупреждений
+ERROR: Ошибка обработки новости ID 340
+
+
+STDERR:
+INFO:logger_config:Используется новый Google AI SDK (genai)
+INFO:main_orchestrator:[TARGET] Обработка новости ID 340...
+INFO:main_orchestrator:Инициализация компонентов системы...
+INFO:main_orchestrator:Инициализация движков новостных источников...
+INFO:engines.registry:\u2705 Зарегистрирован движок: politico
+INFO:engines.registry:\u2705 Зарегистрирован движок: washingtonpost
+INFO:engines.registry:\u2705 Зарегистрирован движок: twitter
+INFO:engines.registry:\u2705 Зарегистрирован движок: nbcnews
+INFO:main_orchestrator:\u2713 Движки новостных источников инициализированы
+INFO:telegram_bot:\U0001f4e1 Publish group: -4951287237, push bot: 848761...QXWQ
+INFO:telegram_bot:Расширенная база данных новостей инициализирована: D:/work/shorts_news\data\user_news.db
+INFO:main_orchestrator:\u2713 Telegram Bot инициализирован
+INFO:logger_config:\U0001f511 [DEBUG] Инициализация Gemini провайдера с ключом: AIza...aGT0
+INFO:logger_config:Gemini API configured successfully.
+INFO:main_orchestrator:\u2713 LLM Processor инициализирован
+INFO:video_exporter:Selenium WebDriver успешно инициализирован
+INFO:main_orchestrator:\u2713 Video Exporter (Selenium) инициализирован
+INFO:main_orchestrator:YouTube загрузка отключена в конфигурации
+INFO:telegram_publisher:\U0001f4e2 Telegram Publisher инициализирован для канала @tubepush_bot
+INFO:telegram_publisher:\U0001f4e2 Используется числовой ID канала: -1002685642224
+INFO:main_orchestrator:\u2713 Telegram Publisher инициализирован
+INFO:main_orchestrator:Все компоненты успешно инициализированы
+INFO:main_orchestrator:[SUCCESS] Найдена новость: NOW: The true scope of the crowd for Charlie Kirk ...
+INFO:main_orchestrator:\U0001f3ac Processing news ID 340: NOW: The true scope of the crowd for Charlie Kirk ...
+INFO:logger_config:Processing news item: NOW: The true scope of the crowd for Charlie Kirk ...
+INFO:logger_config:Provider has generate_video_package method
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1758539831.551268   32344 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+INFO:logger_config:Generated video_package: {'video_content': {'title': 'Charlie Kirk Event Attracts Massive Crowd in Arizona', 'summary': 'A Charlie Kirk event in Arizona has drawn a surprisingly large crowd. Initial estimates of 100,000 attendees have been revised upwards to as many as 300,000. The event is being described as potentially historic.'}, 'seo_package': {'youtube_title': 'Massive Turnout for Charlie Kirk Event in Arizona! Up to 300,000 Attend', 'youtube_description': 'Reports indicate an unexpectedly large crowd gathered for a Charlie Kirk event in Arizona, with estimates reaching 300,000. #CharlieKirk #Arizona #Politics #CrowdSize #Conservative', 'tags': ['Charlie Kirk', 'Arizona', 'politics', 'conservative', 'event', 'rally', 'crowd size', 'turnout', '300000 people', 'political event', 'US politics', 'conservative movement', 'arizona event', 'kirk event']}}
+INFO:logger_config:Successfully generated video package for news ID 340
+INFO:main_orchestrator:\U0001f50d DEBUG: llm_result = {'status': 'success', 'video_package': {'video_content': {'title': 'Charlie Kirk Event Attracts Massive Crowd in Arizona', 'summary': 'A Charlie Kirk event in Arizona has drawn a surprisingly large crowd. Initial estimates of 100,000 attendees have been revised upwards to as many as 300,000. The event is being described as potentially historic.'}, 'seo_package': {'youtube_title': 'Massive Turnout for Charlie Kirk Event in Arizona! Up to 300,000 Attend', 'youtube_description': 'Reports indicate an unexpectedly large crowd gathered for a Charlie Kirk event in Arizona, with estimates reaching 300,000. #CharlieKirk #Arizona #Politics #CrowdSize #Conservative', 'tags': ['Charlie Kirk', 'Arizona', 'politics', 'conservative', 'event', 'rally', 'crowd size', 'turnout', '300000 people', 'political event', 'US politics', 'conservative movement', 'arizona event', 'kirk event']}}}
+INFO:main_orchestrator:\U0001f50d DEBUG: video_package = {'video_content': {'title': 'Charlie Kirk Event Attracts Massive Crowd in Arizona', 'summary': 'A Charlie Kirk event in Arizona has drawn a surprisingly large crowd. Initial estimates of 100,000 attendees have been revised upwards to as many as 300,000. The event is being described as potentially historic.'}, 'seo_package': {'youtube_title': 'Massive Turnout for Charlie Kirk Event in Arizona! Up to 300,000 Attend', 'youtube_description': 'Reports indicate an unexpectedly large crowd gathered for a Charlie Kirk event in Arizona, with estimates reaching 300,000. #CharlieKirk #Arizona #Politics #CrowdSize #Conservative', 'tags': ['Charlie Kirk', 'Arizona', 'politics', 'conservative', 'event', 'rally', 'crowd size', 'turnout', '300000 people', 'political event', 'US politics', 'conservative movement', 'arizona event', 'kirk event']}}
+INFO:scripts.media_manager:\U0001f4f9 Настройки медиа: макс. длительность видео 300с, макс. размер видео 100MB
+INFO:engines.twitter.twitter_media_manager:\U0001f426 Обработка Twitter медиа...
+INFO:engines.twitter.twitter_media_manager:\U0001f50d DEBUG: Обрабатываем 3 видео элементов:
+INFO:engines.twitter.twitter_media_manager:  [0] https://pbs.twimg.com/amplify_video/1969746936597995520/vid/kE02-ZaTcbyt0S2z.mp4
+INFO:engines.twitter.twitter_media_manager:    \u2192 URL видео
+INFO:engines.twitter.twitter_media_manager:  [1] https://pbs.twimg.com/amplify_video_thumb/1969746936597995520/img/kE02-ZaTcbyt0S2z.jpg
+INFO:engines.twitter.twitter_media_manager:    \u2192 URL видео
+INFO:engines.twitter.twitter_media_manager:  [2] resources\media\news\NOW The true scope of the crowd for Charlie Kirk i_98321.mp4
+INFO:engines.twitter.twitter_media_manager:    \u2192 Локальный файл
+INFO:engines.twitter.twitter_media_manager:\U0001f50d DEBUG: Итого видео: 3 (URL: 2, локальные: 1)
+INFO:engines.twitter.twitter_media_manager:\U0001f4f8 Найдено 0 изображений, 3 видео
+INFO:engines.twitter.twitter_media_manager:\u2705 Отфильтровано 3 Twitter видео
+INFO:engines.twitter.twitter_media_manager:\U0001f3ac Найден существующий локальный видео файл: resources\media\news\NOW The true scope of the crowd for Charlie Kirk i_98321.mp4
+INFO:engines.twitter.twitter_media_manager:\u2705 Используем существующий локальный видео файл: resources\media\news\NOW The true scope of the crowd for Charlie Kirk i_98321.mp4
+INFO:engines.twitter.twitter_media_manager:\u2705 Twitter видео скачано: resources\media\news\NOW The true scope of the crowd for Charlie Kirk i_98321.mp4
+INFO:engines.twitter.twitter_media_manager:\U0001f426 Twitter медиа обработано: has_media=True
+INFO:main_orchestrator:\U0001f50d Валидация качества контента...
+WARNING:main_orchestrator:\u274c Контент не прошел валидацию:
+WARNING:main_orchestrator:   - Заголовок слишком короткий или отсутствует
+WARNING:main_orchestrator:   - Текст новости слишком короткий или отсутствует
+WARNING:main_orchestrator:   - Текст содержит слишком мало уникальных символов
+WARNING:main_orchestrator:   - Недостаточно контента для создания видео
+WARNING:main_orchestrator:\U0001f4ca Статистика: заголовок=0 символов, текст=0 символов
+WARNING:main_orchestrator:  \u26a0\ufe0f Content for news 340 failed quality validation. Skipping.
+WARNING:main_orchestrator:[WARNING] Новость ID 340 была забракована
+INFO:main_orchestrator:\U0001f9f9 Очистка ресурсов...
+INFO:video_exporter:Selenium WebDriver закрыт
+INFO:main_orchestrator:\u2713 VideoExporter закрыт
+INFO:main_orchestrator:\u2713 Telegram Bot закрыт
+INFO:main_orchestrator:\u2705 Очистка завершена
+INFO:video_exporter:Selenium WebDriver закрыт

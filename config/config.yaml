@@ -41,7 +41,7 @@ video:
   width: 1080
   height: 1920  # 9:16 aspect ratio for shorts
   duration_seconds: 6  # Длительность шортса 6 секунд
-  fps: 24  # Увеличиваем FPS для более плавного воспроизведения
+  fps: 15  # Дальнейшая оптимизация для ускорения захвата (90 кадров)
   
   # Настройки скорости воспроизведения (для будущих Telegram команд)
   playback_rate: 1.0  # Нормальная скорость (1.0), можно задавать 0.5, 1.5, 2.0 и т.д.
@@ -51,7 +51,7 @@ video:
     enabled: false  # Отключаем предобработку - используем оригинальное видео
     offset_seconds: 3  # Смещение начала (для будущих Telegram команд)
     target_duration: 6  # Целевая длительность
-    output_fps: 24  # FPS для выходного видео
+    output_fps: 15  # FPS для выходного видео (дальнейшая оптимизация)
     convert_to_gif: false  # Используем видео, а не GIF
 
   sandbox_mode:
@@ -129,11 +129,23 @@ news_sources:
     domains: ["washingtonpost.com"]
     logo_file: "washingtonpost.png"
     display_name: "The Washington Post"
+  thehill:
+    domains: ["thehill.com", "www.thehill.com"]
+    logo_file: "thehill.png"
+    display_name: "The Hill"
+  politico:
+    domains: ["politico.com", "www.politico.com"]
+    logo_file: "politico.png"
+    display_name: "POLITICO"
   twitter:
     domains: ["twitter.com", "x.com"]
     logo_file: "twitter.png"
     display_name: "X"
     auto_download: true  # Включает автоматическое скачивание аватарок
+  nypost:
+    domains: ["nypost.com", "www.nypost.com"]
+    logo_file: "new-york-post.png"
+    display_name: "New York Post"
 
 # YouTube настройки
 youtube:

@@ -93,8 +93,9 @@ class MediaManager:
             'ap': 'resources/logos/AssociatedPress.png',
             'financial times': 'resources/logos/Financial_Times_corporate_logo_(no_background).svg',
             'ft': 'resources/logos/Financial_Times_corporate_logo_(no_background).svg',
-            'wall street journal': 'resources/logos/WSJ.png',
-            'wsj': 'resources/logos/WSJ.png',
+            'the hill': 'resources/logos/thehill.png',
+            'thehill': 'resources/logos/thehill.png',
+            'politico': 'resources/logos/politico.png',
         }
         
         source_lower = source_name.lower().strip()
@@ -184,13 +185,19 @@ class MediaManager:
                         local_path = self._download_and_process_video(video_url, news_data.get('title', 'news'))
                     
                     if local_path:
+                        # Получаем смещение начала видео из БД (установленное командой /startat)
+                        # Используем None по умолчанию, чтобы обрезка работала только при явной команде
+                        video_offset = news_data.get('video_start_seconds')
+                        
                         media_result.update({
                             'video_url': video_url,
                             'local_video_path': local_path,
                             'thumbnail': local_path,
-                            'has_media': True
+                            'has_media': True,
+                            'video_offset': video_offset
                         })
-                        logger.info(f"✅ Видео успешно обработано: {local_path}")
+                        offset_info = f" (смещение: {video_offset}с)" if video_offset is not None else ""
+                        logger.info(f"✅ Видео успешно обработано: {local_path}{offset_info}")
                         return media_result
                     else:
                         logger.warning(f"⚠️ Не удалось обработать видео: {video_url}")
@@ -213,13 +220,19 @@ class MediaManager:
                             news_data.get('title', 'twitter_video')
                         )
                         if video_path:
+                            # Получаем смещение начала видео из БД (установленное командой /startat)
+                            # Используем None по умолчанию, чтобы обрезка работала только при явной команде
+                            video_offset = news_data.get('video_start_seconds')
+                            
                             media_result.update({
                                 'video_url': tweet_url,
                                 'local_video_path': video_path,
                                 'thumbnail': video_path,
-                                'has_media': True
+                                'has_media': True,
+                                'video_offset': video_offset
                             })
-                            logger.info(f"✅ Twitter видео успешно скачано: {video_path}")
+                            offset_info = f" (смещение: {video_offset}с)" if video_offset is not None else ""
+                            logger.info(f"✅ Twitter видео успешно скачано: {video_path}{offset_info}")
                             return media_result
                 
                 for media_item in images:

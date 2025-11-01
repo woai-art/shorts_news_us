@@ -102,7 +102,9 @@
             flex-direction: column;
             justify-content: flex-start;
             gap: 15px;
-            padding: 15px 40px; /* Уменьшили отступы */
+            padding: 35px 40px; /* Увеличили вертикальные отступы для предотвращения обрезки */
+            min-height: 0; /* Позволяем вложенным блокам сжиматься по высоте */
+            box-sizing: border-box;
         }
 
         .news-card-footer {
@@ -149,13 +151,16 @@
             color: #ffffff;
             line-height: 1.1; /* Более плотная высота строки */
             text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-            flex: 0 0 20%; /* Заголовок занимает 20% от текстовой секции */
+            flex: 0 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             margin: 0;
             overflow: hidden; /* Обрезаем текст, если не помещается */
+            padding: 12px 20px;
+            box-sizing: border-box;
+            min-height: 0;
         }
 
         .news-card-description {
@@ -164,15 +169,20 @@
             color: rgba(0, 255, 255, 0.9);
             line-height: 1.3;
             text-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
-            flex: 1; /* Заполняет оставшееся пространство (80%) */
+            flex: 1 1 auto;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             text-align: center; /* Выравнивание по центру */
             margin: 0;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            white-space: pre-wrap;
             overflow: hidden; /* Обрезаем текст, если не помещается */
+            padding: 12px 30px;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 0;
         }
 
         .news-card-media {
@@ -316,60 +326,97 @@
         </div>
     </div>
     <script>
+        function fitText(element, targetHeight, options = {}) {
+            if (!element || !targetHeight || targetHeight <= 0) {
+                return;
+            }
+
+            const {
+                minFont = 18,
+                maxFont = 62,
+                step = 1,
+                lineHeight = 1.2,
+                maxIterations = 160,
+                growIterations = 60,
+                tolerance = 4,
+                initialFont
+            } = options;
+
+            const computed = window.getComputedStyle(element);
+            let fontSize = initialFont || parseFloat(computed.fontSize) || maxFont;
+            fontSize = Math.min(fontSize, maxFont);
+            element.style.lineHeight = typeof lineHeight === 'number' ? lineHeight.toString() : lineHeight;
+            element.style.fontSize = fontSize + 'px';
+
+            let counter = 0;
+            while (counter < maxIterations && fontSize > minFont && element.scrollHeight > targetHeight + tolerance) {
+                fontSize -= step;
+                element.style.fontSize = fontSize + 'px';
+                counter++;
+            }
+
+            counter = 0;
+            while (counter < growIterations && fontSize < maxFont && element.scrollHeight + tolerance < targetHeight) {
+                fontSize += step;
+                element.style.fontSize = fontSize + 'px';
+                counter++;
+
+                if (element.scrollHeight > targetHeight) {
+                    fontSize -= step;
+                    element.style.fontSize = fontSize + 'px';
+                    break;
+                }
+            }
+
+            if (fontSize < minFont) {
+                element.style.fontSize = minFont + 'px';
+            }
+        }
+
         function adjustFontSize() {
             const newsText = document.getElementById('newsText');
             const newsBrief = document.getElementById('newsBrief');
             const textSection = document.querySelector('.news-card-text-section');
             if (!newsText || !newsBrief || !textSection) return;
-            
-            const textSectionRect = textSection.getBoundingClientRect();
-            const availableHeight = textSectionRect.height - 40; // Уменьшили отступы
-            
-            // Заголовок: 20% от доступной высоты
-            const titleLength = newsText.textContent.length;
-            const titleHeight = availableHeight * 0.2; // Изменили с 0.3 на 0.2 (20%)
-            const baseTitleSize = Math.max(24, Math.min(titleHeight / 1.1, 60)); // Уменьшили максимальный размер
-            const lengthFactor = titleLength > 80 ? 0.75 : titleLength > 60 ? 0.85 : titleLength > 40 ? 0.95 : 1.0;
-            const titleFontSize = Math.round(baseTitleSize * lengthFactor);
-            newsText.style.fontSize = titleFontSize + 'px';
-            
-            // Описание: 80% от доступной высоты - агрессивная адаптация для полного заполнения
-            const briefLength = newsBrief.textContent.length;
-            const briefHeight = availableHeight * 0.8; // 80% от доступной высоты
-            
-            // Более агрессивный расчет - начинаем с большего размера
-            const containerWidth = textSectionRect.width - 80; // Учитываем отступы
-            const estimatedCharsPerLine = Math.floor(containerWidth / 12); // Уменьшили ширину символа для большего количества строк
-            const estimatedLines = Math.ceil(briefLength / estimatedCharsPerLine);
-            
-            // Агрессивно рассчитываем размер шрифта для заполнения всей области
-            const lineHeight = 1.25; // Уменьшили межстрочный интервал
-            let maxFontSize = Math.max(25, Math.min(briefHeight / (estimatedLines * lineHeight), 60)); // Увеличили минимальный размер
-            
-            // Убираем фактор длины - делаем максимальный размер для заполнения
-            const briefFontSize = Math.round(maxFontSize);
-            newsBrief.style.fontSize = briefFontSize + 'px';
-            
-            console.log(`Brief: ${briefLength} chars, ${estimatedLines} lines, ${briefFontSize}px font (aggressive)`);
 
-            // Проверяем переполнение и корректируем размер более мягко
-            setTimeout(() => {
-                const briefRect = newsBrief.getBoundingClientRect();
-                const textSectionRect2 = textSection.getBoundingClientRect();
-                const availableHeight = textSectionRect2.height - 40; // Отступы
-                const briefAreaHeight = availableHeight * 0.8; // 80% для описания
-                const overflow = briefRect.height - briefAreaHeight;
-                
-                if (overflow > 10) { // Увеличили порог переполнения
-                    const newBriefSize = Math.max(20, briefFontSize * 0.9); // Более мягкое уменьшение
-                    newsBrief.style.fontSize = newBriefSize + 'px';
-                    console.log(`Overflow detected: ${overflow}px, reducing font to ${newBriefSize}px`);
-                } else if (overflow < -20) { // Если текст слишком маленький, увеличиваем
-                    const newBriefSize = Math.min(60, briefFontSize * 1.1);
-                    newsBrief.style.fontSize = newBriefSize + 'px';
-                    console.log(`Underflow detected: ${overflow}px, increasing font to ${newBriefSize}px`);
-                }
-            }, 100);
+            const styles = window.getComputedStyle(textSection);
+            const paddingTop = parseFloat(styles.paddingTop) || 0;
+            const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+            const gap = parseFloat(styles.rowGap || styles.gap || '0') || 0;
+            const sectionHeight = textSection.clientHeight - paddingTop - paddingBottom;
+            const sectionWidth = textSection.clientWidth - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0);
+
+            const titleLength = (newsText.textContent || '').trim().length;
+            const baseTitleFont = Math.min(sectionHeight * 0.24, sectionWidth * 0.08, 70);
+            const lengthFactor = titleLength > 80 ? 0.78 : titleLength > 60 ? 0.86 : titleLength > 40 ? 0.94 : 1;
+            const initialTitleFont = Math.max(26, baseTitleFont * lengthFactor);
+
+            fitText(newsText, sectionHeight * 0.25, {
+                minFont: 24,
+                maxFont: 68,
+                step: 1,
+                lineHeight: 1.12,
+                initialFont: initialTitleFont,
+                tolerance: 3
+            });
+
+            const titleHeight = newsText.scrollHeight;
+            const availableForBrief = Math.max(sectionHeight - titleHeight - gap, sectionHeight * 0.6);
+
+            const briefLength = (newsBrief.textContent || '').trim().length;
+            const estimatedCharsPerLine = Math.max(20, Math.floor(sectionWidth / 12));
+            const estimatedLines = Math.max(1, Math.ceil(briefLength / estimatedCharsPerLine));
+            const baseBriefFont = availableForBrief / Math.max(estimatedLines * 1.32, 1);
+            const initialBriefFont = Math.max(22, Math.min(baseBriefFont, 58));
+
+            fitText(newsBrief, availableForBrief, {
+                minFont: 20,
+                maxFont: 58,
+                step: 1,
+                lineHeight: 1.26,
+                initialFont: initialBriefFont,
+                tolerance: 6
+            });
         }
 
         function adjustMediaTitleSize() {
@@ -408,10 +455,28 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function runInitialLayout() {
             adjustFontSize();
             adjustMediaTitleSize();
             initializeMedia();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const execute = () => {
+                runInitialLayout();
+                requestAnimationFrame(adjustFontSize);
+                setTimeout(adjustFontSize, 200);
+            };
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(execute);
+            } else {
+                setTimeout(execute, 150);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(adjustFontSize);
         });
     </script>
 </body>

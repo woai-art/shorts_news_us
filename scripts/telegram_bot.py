@@ -335,15 +335,6 @@ class NewsTelegramBot:
             news_id = self._save_parsed_news(parsed_data, user_id, chat_id)
             logger.info(f"✅ Новость сохранена в БД (ID: {news_id}): {parsed_data['title'][:50]}...")
 
-            # Если есть видео — отправим запрос на указание старта воспроизведения в админ-группу
-            try:
-                videos = parsed_data.get('videos') or []
-                if self.publish_group_id and videos:
-                    # Используем унифицированный HTTP-нотификатор (работает без asyncio контекста Telegram)
-                    self._notify_group_on_video(news_id, parsed_data.get('title',''), videos)
-            except Exception as e:
-                logger.warning(f"Не удалось отправить сервисное сообщение в группу: {e}")
-
             # Отправка статуса в канал публикации
             if hasattr(self, 'telegram_publisher') and self.telegram_publisher:
                 try:

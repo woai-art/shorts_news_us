@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Optional, List, Tuple, Any
 import yaml
 from datetime import datetime
+import base64
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
@@ -27,6 +28,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import io
 import subprocess
+
+import tempfile
+import shutil
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -62,7 +66,7 @@ class VideoExporter:
             chrome_options.add_argument("--hide-scrollbars")
             chrome_options.add_argument("--disable-extensions")
             chrome_options.add_argument("--disable-plugins")
-            # Отключаем GCM для избежания ошибок регистрации
+            # Отключаем GCM, уведомления и фоновые процессы для чистых логов
             chrome_options.add_argument("--disable-background-timer-throttling")
             chrome_options.add_argument("--disable-backgrounding-occluded-windows")
             chrome_options.add_argument("--disable-renderer-backgrounding")
@@ -70,6 +74,13 @@ class VideoExporter:
             chrome_options.add_argument("--disable-component-extensions-with-background-pages")
             chrome_options.add_argument("--disable-default-apps")
             chrome_options.add_argument("--disable-sync")
+            chrome_options.add_argument("--disable-notifications")
+            chrome_options.add_argument("--gcm-registration-ticket=")
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+            chrome_options.add_experimental_option('prefs', {
+                'gcm.channel_status': False,
+                'profile.default_content_setting_values.notifications': 2
+            })
             
             self.driver = webdriver.Chrome(options=chrome_options)
             logger.info("Selenium WebDriver успешно инициализирован")
@@ -123,11 +134,9 @@ class VideoExporter:
                 EC.presence_of_element_located((By.CLASS_NAME, "container"))
             )
 
-            frames = self._capture_animation_frames()
-            video_path = self._create_video_from_frames(frames, output_path)
+            video_path = self._record_animation_stream(output_path)
 
             os.remove(temp_html_path)
-            self._cleanup_temp_frames(output_path)
 
             logger.info(f"Видео успешно создано: {video_path}")
             return video_path
@@ -136,38 +145,129 @@ class VideoExporter:
             raise
 
     def _capture_animation_frames(self) -> list:
-        """Захват кадров анимации с точной синхронизацией видео."""
-        fps = self.video_config.get('fps', 30)
-        duration = self.video_config.get('duration_seconds', 59)
+        """Захват кадров анимации с синхронизацией через DevTools (fallback на старый метод)."""
+        fps = self.video_config.get('fps', 20)  # Снижен с 24 до 20 для ускорения захвата
+        duration = self.video_config.get('duration_seconds', 6)  # 6 секунд видео
         num_frames = int(duration * fps)
         logger.info(f"Захватываем {num_frames} кадров за {duration} секунд с FPS {fps} с синхронизацией видео.")
 
-        # Ставим видео на паузу и готовимся к ручному управлению
-        self.driver.execute_script("document.getElementById('newsCardVideo').pause();")
-
-        frames = []
-        for i in range(num_frames):
-            # Вычисляем точное время для текущего кадра
-            current_time = i / fps
-            
-            # Устанавливаем время и ждем, пока видео отреагирует
-            # Этот скрипт устанавливает время и возвращает true, когда видео готово
-            self.driver.execute_script(
-                f"""const video = document.getElementById('newsCardVideo');
-                video.currentTime = {current_time};
-                """
+        try:
+            video_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.ID, "newsCardVideo"))
             )
-            # Небольшая пауза, чтобы дать браузеру время отрисовать кадр после перемотки
-            time.sleep(1 / (fps * 2)) # Пауза меньше длительности кадра
 
-            # Делаем скриншот
+            container_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "container"))
+            )
+
+            metrics = self.driver.execute_script(
+                """
+                const container = arguments[0];
+                if (!container) { return null; }
+                const rect = container.getBoundingClientRect();
+                return {
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                    dpr: window.devicePixelRatio || 1
+                };
+                """,
+                container_element
+            )
+
+            if not metrics or metrics.get('width', 0) == 0 or metrics.get('height', 0) == 0:
+                raise ValueError("Не удалось определить область видео для скриншота")
+
+            dpr = metrics['dpr']
+            clip = {
+                "x": metrics['x'] * dpr,
+                "y": metrics['y'] * dpr,
+                "width": metrics['width'] * dpr,
+                "height": metrics['height'] * dpr,
+                "scale": 1
+            }
+
+            self.driver.execute_script("arguments[0].pause();", video_element)
+            # Включаем DevTools Page API (идемпотентно)
+            try:
+                self.driver.execute_cdp_cmd("Page.enable", {})
+            except Exception:
+                pass
+
+            frames: List[np.ndarray] = []
+
+            for i in range(num_frames):
+                current_time = i / fps
+
+                # Быстрая установка времени без явного ожидания seek
+                self.driver.execute_script(
+                    """
+                    const video = arguments[0];
+                    video.currentTime = arguments[1];
+                    """,
+                    video_element, current_time
+                )
+
+                # Небольшая пауза только для первого кадра, остальные без задержки
+                if i == 0:
+                    time.sleep(0.1)
+
+                screenshot_data = self.driver.execute_cdp_cmd(
+                    "Page.captureScreenshot",
+                    {
+                        "format": "jpeg",
+                        "quality": 90,
+                        "clip": clip
+                    }
+                )
+
+                jpeg_bytes = base64.b64decode(screenshot_data['data'])
+                frame_bgr = cv2.imdecode(np.frombuffer(jpeg_bytes, np.uint8), cv2.IMREAD_COLOR)
+                if frame_bgr is None:
+                    raise ValueError("cv2.imdecode вернул None")
+
+                frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+                if (frame_rgb.shape[1], frame_rgb.shape[0]) != (self.video_config['width'], self.video_config['height']):
+                    frame_rgb = cv2.resize(
+                        frame_rgb,
+                        (self.video_config['width'], self.video_config['height']),
+                        interpolation=cv2.INTER_AREA
+                    )
+
+                frames.append(frame_rgb)
+
+            logger.info(f"Захвачено {len(frames)} кадров с точной видеосинхронизацией (DevTools).")
+            return frames
+
+        except Exception as e:
+            logger.warning(f"DevTools скриншоты недоступны, возвращаемся к headless-снимкам: {e}")
+            return self._capture_frames_via_screenshot(num_frames, fps)
+
+    def _capture_frames_via_screenshot(self, num_frames: int, fps: int) -> List[np.ndarray]:
+        """Резервный метод захвата кадров c полным скриншотом окна."""
+        frames: List[np.ndarray] = []
+
+        for i in range(num_frames):
+            current_time = i / fps
+            self.driver.execute_script(
+                """
+                const video = document.getElementById('newsCardVideo');
+                if (video) {
+                    video.currentTime = arguments[0];
+                }
+                """,
+                current_time
+            )
+            time.sleep(1 / max(fps * 2, 1))
+
             screenshot = self.driver.get_screenshot_as_png()
             image = Image.open(io.BytesIO(screenshot))
             if image.size != (self.video_config['width'], self.video_config['height']):
                 image = image.resize((self.video_config['width'], self.video_config['height']))
             frames.append(np.array(image))
 
-        logger.info(f"Захвачено {len(frames)} кадров с точной видеосинхронизацией.")
+        logger.info(f"Захвачено {len(frames)} кадров с точной видеосинхронизацией (fallback).")
         return frames
 
     def _create_video_from_frames(self, frames: list, output_path: str) -> str:
@@ -226,16 +326,16 @@ class VideoExporter:
             temp_html_uri = Path(os.path.abspath(temp_html_path)).as_uri()
             self.driver.get(temp_html_uri)
             time.sleep(3) # Wait for resources to load
-            
+
             frames = self._capture_animation_frames()
             music_path = self._get_background_music()
             fps = self.video_config.get('fps', 30)
 
             self._export_frames_to_video_fallback(frames, output_path, fps, music_path)
-            
+
             if os.path.exists(temp_html_path):
                 os.remove(temp_html_path)
-            
+
             logger.info(f"News short video created: {output_path}")
             return output_path
             
@@ -449,8 +549,9 @@ class VideoExporter:
             'ap': 'resources/logos/AssociatedPress.png',
             'financial times': 'resources/logos/Financial_Times_corporate_logo_(no_background).svg',
             'ft': 'resources/logos/Financial_Times_corporate_logo_(no_background).svg',
-            'wall street journal': 'resources/logos/WSJ.png',
-            'wsj': 'resources/logos/WSJ.png',
+            'the hill': 'resources/logos/thehill.png',
+            'thehill': 'resources/logos/thehill.png',
+            'politico': 'resources/logos/politico.png',
         }
         
         source_lower = source_name.lower().strip()
@@ -574,8 +675,10 @@ class VideoExporter:
         """Получает путь к фоновой музыке"""
         try:
             from scripts.media_manager import MediaManager
-            config_path = 'config/config.yaml'
-            media_manager = MediaManager(config_path)
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.yaml')
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            media_manager = MediaManager(config)
             music_path = media_manager.get_background_music()
             
             if music_path:

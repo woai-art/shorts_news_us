@@ -1,0 +1,25 @@
+[Unit]
+Description=Shorts News - AI News Video Generator
+After=network.target
+
+[Service]
+Type=simple
+User=dzianis
+WorkingDirectory=/home/dzianis/shorts_news
+Environment=PATH=/home/dzianis/shorts_news/venv/bin
+Environment=DISPLAY=:99
+ExecStart=/home/dzianis/shorts_news/venv/bin/python channel_monitor.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/dzianis/shorts_news
+
+[Install]
+WantedBy=multi-user.target
+

@@ -25,7 +25,7 @@ from telegram_publisher import TelegramPublisher
 from analytics import NewsAnalytics
 
 # Импортируем новую архитектуру движков
-from engines import registry, PoliticoEngine, WashingtonPostEngine, TwitterEngine, NBCNewsEngine, ABCNewsEngine, TelegramPostEngine, FinancialTimesEngine
+from engines import registry, PoliticoEngine, WashingtonPostEngine, TwitterEngine, NBCNewsEngine, ABCNewsEngine, TelegramPostEngine, FinancialTimesEngine, TheHillEngine, NYPostEngine
 # from engines import WSJEngine  # Отключен: требует подписку + Cloudflare
 
 # Настройка логирования
@@ -91,6 +91,8 @@ class ShortsNewsOrchestrator:
             registry.register_engine('abcnews', ABCNewsEngine)
             registry.register_engine('telegrampost', TelegramPostEngine)
             registry.register_engine('financialtimes', FinancialTimesEngine)
+            registry.register_engine('thehill', TheHillEngine)
+            registry.register_engine('nypost', NYPostEngine)
             # registry.register_engine('wsj', WSJEngine)  # Отключен: требует подписку + Cloudflare
             
             # TODO: Добавить остальные движки
@@ -357,6 +359,12 @@ class ShortsNewsOrchestrator:
         elif 'financial' in source or 'ft' in source:
             from engines.financialtimes.financialtimes_media_manager import FinancialTimesMediaManager
             media_manager = FinancialTimesMediaManager(self.config)
+        elif 'hill' in source:
+            from engines.thehill.thehill_media_manager import TheHillMediaManager
+            media_manager = TheHillMediaManager(self.config)
+        elif 'new york post' in source or 'ny post' in source or 'nypost' in source:
+            from engines.nypost.nypost_media_manager import NYPostMediaManager
+            media_manager = NYPostMediaManager(self.config)
         # elif 'wsj' in source or 'wall street' in source:
         #     from engines.wsj.wsj_media_manager import WSJMediaManager
         #     media_manager = WSJMediaManager(self.config)
